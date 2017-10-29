@@ -193,8 +193,11 @@ class OnecardHelper extends OnecardHelpersOnecard
 		else	
 			return "Trong kho";	
 	}
-	public static function gen_select ($table, $current_id=NULL, $related_field= NULL, $related_table = NULL, $fkey = NULL) {
+	public static function gen_select ($title, $table, $current_id=NULL, $related_field= NULL, $related_table = NULL, $fkey = NULL) {
 		// Get a db connection.
+		if ($current_id) {
+			$array_id = explode(",",$current_id);
+		}
 		$db = JFactory::getDbo();
 
 		// Create a new query object.
@@ -216,13 +219,11 @@ class OnecardHelper extends OnecardHelpersOnecard
 
 		// Load the results as a list of stdClass objects (see later for more options on retrieving data).
 		$results = $db->loadObjectList();
-		echo '<select name="'.$table.'" onchange="this.form.submit()">
-			<option value="">-- Lọc --</option>
-		';
+		echo '<select name="'.$table.'[]"  multiple>';
 		
 		foreach ($results as $option) {
 			$active = "";
-			if ($current_id == $option->id)
+			if (in_array($option->id,$array_id))
 				$active = "selected";
 			echo '<option value="'.$option->id.'" '.$active.'>'.$option->title.'</option>';
 		}

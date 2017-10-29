@@ -1,25 +1,26 @@
 .icon-48-tables {
-      background-image: url(../images/l_tables.png);
-      padding-left:60px!important;
+    background-image: url(../images/l_tables.png);
+    padding-left: 60px!important;
 }
 
 .icon-48-table {
-      background-image: url(../images/l_tables.png);
-      padding-left:60px!important;
+    background-image: url(../images/l_tables.png);
+    padding-left: 60px!important;
 }
 
-
-
-.other-filters{
+.other-filters {
     padding: 0 14px;
 }
+
 ul#submenu {
     display: none;
 }
+
 select {
     width: auto !important;
-  
 }
-div.chzn-container {
+
+div.chzn-container,
+.chzn-container.chzn-container-multi {
     width: 100% !important;
 }

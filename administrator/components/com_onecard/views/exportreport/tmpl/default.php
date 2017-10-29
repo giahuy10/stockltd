@@ -9,18 +9,33 @@
 // No direct access
 defined('_JEXEC') or die;
 
-
+JHtml::addIncludePath(JPATH_COMPONENT . '/helpers/');
+JHtml::_('bootstrap.tooltip');
+JHtml::_('behavior.multiselect');
+JHtml::_('formbehavior.chosen', 'select');
+// Import CSS
+$document = JFactory::getDocument();
+$document->addStyleSheet(JUri::root() . 'administrator/components/com_onecard/assets/css/onecard.css');
 $user       = JFactory::getUser();
 $option = JRequest::getVar('option');
 $view = JRequest::getVar('view');
+
+$daterange = JRequest::getVar('daterange');
+echo $daterange;
 $date_from = JRequest::getVar('date_from');
 $date_to = JRequest::getVar('date_to');
 $onecard_voucher = JRequest::getVar('onecard_voucher');
+$onecard_voucher = implode(",",$onecard_voucher);
 $onecard_brand = JRequest::getVar('onecard_brand');
+$onecard_brand = implode(",",$onecard_brand);
 $type = JRequest::getVar('type');
+$type = implode(",",$type);
 $unit = JRequest::getVar('unit');
+$unit = implode(",",$unit);
 $onecard_partner = JRequest::getVar('onecard_partner');
+$onecard_partner = implode(",",$onecard_partner);
 $onecard_event = JRequest::getVar('onecard_event');
+$onecard_event = implode(",",$onecard_event);
 //echo $date_from."-".$date_to;
 // Get a db connection.
 $db = JFactory::getDbo();
@@ -40,17 +55,17 @@ $query
 	->join('INNER', $db->quoteName('#__onecard_event', 'e') . ' ON (' . $db->quoteName('b.event') . ' = ' . $db->quoteName('e.id') . ')')
 	->join('INNER', $db->quoteName('#__onecard_partner', 'f') . ' ON (' . $db->quoteName('e.partner') . ' = ' . $db->quoteName('f.id') . ')');
 	if ($onecard_voucher)
-		$query->where($db->quoteName('c.id') . ' = '.$onecard_voucher);
+		$query->where($db->quoteName('c.id') . ' IN ( '.$onecard_voucher.')');
 	if ($onecard_brand)
-		$query->where($db->quoteName('d.id') . ' = '.$onecard_brand);
+		$query->where($db->quoteName('d.id') . ' IN ( '.$onecard_brand.')');
 	if ($type)
-		$query->where($db->quoteName('c.type') . ' = '.$type);
+		$query->where($db->quoteName('c.type') . ' IN ( '.$type.')');
 	if ($unit)
-		$query->where($db->quoteName('c.unit') . ' = '.$unit);
+		$query->where($db->quoteName('c.unit') . ' IN ( '.$unit.')');
 	if ($onecard_partner)
-		$query->where($db->quoteName('f.id') . ' = '.$onecard_partner);
+		$query->where($db->quoteName('f.id') . ' IN ( '.$onecard_partner.')');
 	if ($onecard_event)
-		$query->where($db->quoteName('e.id') . ' = '.$onecard_event);
+		$query->where($db->quoteName('e.id') . ' IN ( '.$onecard_event.')');
     if ($date_from)
 		$query->where('DATE('.$db->quoteName('b.created') . ') >= '.$db->quote($date_from));
 	 if ($date_to)
@@ -66,24 +81,60 @@ $results = $db->loadObjectList();
 ?>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="<?php echo JUri::root()?>administrator/components/com_inventory/assets/js/jquery.table2excel.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<script>
-  $( function() {
-   $( ".datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
-  } );
-  </script>
-<style>
-	input, select {
-		width: auto !important;
-		margin-bottom: 0 !important;
-	}
-</style>
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/3/css/bootstrap.css" />
+ 
+<!-- Include Date Range Picker -->
+<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
 <h2>Báo cáo xuất</h2>
 <form method="post" action="index.php?option=com_onecard&view=exportreport">
-Thời gian từ <input  type="text" class="datepicker" name="date_from" onchange="this.form.submit()" value="<?php echo $date_from?>" />
- đến <input  type="text" class="datepicker" name="date_to" onchange="this.form.submit()" value="<?php echo $date_to?>" /> <a href="#" class="btn btn-success" onclick="export()" id="export"><span class="icon-download" aria-hidden="true"></span>Download Excel file</a>
- <br/> <br/>
+<div class="row-fluid">
+	<div class="span3">
+	
+ <input type="text" name="daterange" value="01/01/2017 - <?php echo date("m/d/Y")?>" />
+
+<script type="text/javascript">
+$(function() {
+    $('input[name="daterange"]').daterangepicker();
+});
+</script>
+	</div>
+	<div class="span3"><?php OnecardHelper::gen_select("Voucher","onecard_voucher",$onecard_voucher)?></div>
+	<div class="span3"> <?php OnecardHelper::gen_select("Nhan hieu","onecard_brand",$onecard_brand)?></div>
+	<div class="span3"><?php OnecardHelper::gen_select("Doi tac","onecard_partner",$onecard_partner)?></div>
+	
+</div>
+<div class="row-fluid">
+	<div class="span3"><?php OnecardHelper::gen_select("Su kien","onecard_event",$onecard_event)?></div>
+	<div class="span3"> <select name="type[]" multiple >
+					
+					<option value="1" <?php if ($type == 1) echo "selected"?>>E-Code</option>
+					<option value="2" <?php if ($type == 2) echo "selected"?>>Voucher</option>
+					<option value="3" <?php if ($type == 3) echo "selected"?>>Product</option>
+					<option value="4" <?php if ($type == 4) echo "selected"?>>Coupon</option>
+				</select></div>
+	<div class="span3"><select name="unit[]" multiple>
+					
+					<option value="1" <?php if ($unit == 1) echo "selected"?>>NCC</option>
+					<option value="2" <?php if ($unit == 2) echo "selected"?>>OneCard</option>
+					
+				</select></div>
+	<div class="span3"><button class="btn btn-info">search</button>
+	<a href="#" class="btn btn-success" onclick="export()" id="export">
+	<span class="icon-download" aria-hidden="true"></span>Download</a>
+	</div>
+	
+</div>
+
+ 
+ 
+
+				
+				
+				
+				
 <table class="table table-bordered" id="resultsTableExportClient">
 	
 		
@@ -104,37 +155,8 @@ Thời gian từ <input  type="text" class="datepicker" name="date_from" onchang
 		<th>Ngày xuất</th>
 		
 	</tr>
-	<tr class="noExl">
-		
-			<td></td>
-			<td><?php OnecardHelper::gen_select("onecard_voucher",$onecard_voucher)?></td>
-			<td><?php OnecardHelper::gen_select("onecard_brand",$onecard_brand)?></td>
-			<td></td>
-			<td></td>
-			<td>
-				<select name="type" onchange="this.form.submit()">
-					<option value="">-- Lọc --</option>
-					<option value="1" <?php if ($type == 1) echo "selected"?>>E-Code</option>
-					<option value="2" <?php if ($type == 2) echo "selected"?>>Voucher</option>
-					<option value="3" <?php if ($type == 3) echo "selected"?>>Product</option>
-					<option value="4" <?php if ($type == 4) echo "selected"?>>Coupon</option>
-				</select>
-			</td>
-			<td></td>
-			<td><select name="unit" onchange="this.form.submit()">
-					<option value="">-- Lọc --</option>
-					<option value="1" <?php if ($unit == 1) echo "selected"?>>NCC</option>
-					<option value="2" <?php if ($unit == 2) echo "selected"?>>OneCard</option>
-					
-				</select></td>
-			
-			<td><?php OnecardHelper::gen_select("onecard_partner",$onecard_partner)?></td>
-			<td><?php OnecardHelper::gen_select("onecard_event",$onecard_event)?></td>
-			<td>
-				
-			</td>
-			
-		</tr>
+	
+
 		<input type="hidden" name="option" value="<?php echo $option?>"/>
 		<input type="hidden" name="view" value="<?php echo $view?>"/>
 		
